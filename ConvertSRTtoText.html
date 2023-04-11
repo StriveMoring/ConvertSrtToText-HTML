@@ -5,14 +5,25 @@
 	<title>Convert SRT to Text</title>
 	<style>
 		.container {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			gap: 10px;
-			margin-top: 20px;
+		  display: flex;
+		  justify-content: space-between;
+		  align-items: center;
+		  gap: 10px;
+		  margin-top: 10px;
 		}
+
+		.left-container, .right-container {
+		  width: 100%;
+		}
+
+		.title {
+		  font-size: 18px;
+		  font-weight: bold;
+		  margin-bottom: 5px;
+		}
+
 		textarea {
-			width: 45%;
+			width: 100%;
 			height: 300px;
 			resize: none;
 			font-size: 16px;
@@ -20,15 +31,16 @@
 			padding: 10px;
 			box-sizing: border-box;
 		}
-		textarea.left {
-			order: 1;
-		}
-		textarea.right {
-			order: 2;
+	
+		h2 {
+			margin-top: 0;
+			margin-bottom: 5px;
+			font-size: 18px;
+			font-weight: bold;
 		}
 		 button {
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 17px;
             padding: 5px 10px;
             background-color: #4CAF50;
             color: #fff;
@@ -41,50 +53,90 @@
 <body>
 	<h1>Convert SRT to Text</h1>
 	<form>
-		<div>
-			<label for="input-file">Choose SRT file:</label>
-			<input type="file" id="input-file" accept=".srt" required>
+	  <div>
+		<label for="input-file">Choose SRT File:</label>
+		<input type="file" id="input-file" accept=".srt" required>
+	  </div>
+	  <div>
+		<button type="button" onclick="preview()">Convert</button>
+	  </div>
+	  <div class="container">
+		<div class="left-container">
+		  <div class="title">字幕原文</div>
+		  <textarea id="input-text" class="left" readonly></textarea>
 		</div>
-		<div>
-			<button type="button" onclick="preview()">Convert</button>
+		<div class="right-container">
+		  <div class="title">纯文字</div>
+		  <textarea id="output-text" class="right" readonly></textarea>
 		</div>
-		<div class="container">
-			<textarea id="input-text" class="left" readonly></textarea>
-			<textarea id="output-text" class="right" readonly></textarea>
-		</div>
-		<div>
-			<button type="button" onclick="download()">Download</button>
-		</div>
+	  </div>
+	  <div style="text-align: right;">
+		<button type="button" onclick="copyToClipboard()">Copy</button>
+		<button type="button" onclick="download()">Download Txt</button>
+		<button type="button" onclick="downloadWord()">Download Word</button>
+	  </div>
 	</form>
 	<script>
-		function preview() {
-			const inputFile = document.getElementById('input-file').files[0];
+		const inputFile = document.getElementById('input-file');
+		const inputText = document.getElementById('input-text');
+		const outputText = document.getElementById('output-text');
+
+		inputFile.addEventListener('change', function() {
+			const file = this.files[0];
 			const reader = new FileReader();
-			reader.readAsText(inputFile);
 			reader.onload = function() {
-				document.getElementById('input-text').value = reader.result;
-				const lines = reader.result.split(/\r?\n/);
-				let output = '';
-				for (const line of lines) {
-					if (line.match(/^\d+$/) || line.match(/^\d{2}:\d{2}:\d{2},\d{3}\s-->\s\d{2}:\d{2}:\d{2},\d{3}$/) || line === '') {
-						continue;
-					}
-					output += line + '\n';
-				}
-				document.getElementById('output-text').value = output;
+				inputText.value = reader.result;
 			};
+			reader.readAsText(file);
+		});
+
+		function preview() {
+			const lines = inputText.value.split(/\r?\n/);
+			let output = '';
+			for (const line of lines) {
+				if (line.match(/^\d+$/) || line.match(/^\d{2}:\d{2}:\d{2},\d{3}\s-->\s\d{2}:\d{2}:\d{2},\d{3}$/) || line === '') {
+					continue;
+				}
+				output += line + '\n';
+			}
+			outputText.value = output;
 		}
+
 		function download() {
-			const outputText = document.getElementById('output-text').value;
-			const blob = new Blob([outputText], {type: 'text/plain;charset=utf-8'});
+			const blob = new Blob([outputText.value], {type: 'text/plain;charset=utf-8'});
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = document.getElementById('input-file').files[0].name.replace('.srt', '') + '.txt';
+			a.download = inputFile.files[0].name.replace('.srt', '') + '.txt';
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
+		}
+		
+		function copyToClipboard() {
+			outputText.select();
+			document.execCommand('copy');
+			const tooltip = document.createElement('div');
+			tooltip.classList.add('tooltip');
+			tooltip.textContent = 'Copy Successful!';
+			document.body.appendChild(tooltip);
+			setTimeout(() => {
+				tooltip.remove();
+			}, 2000);
+		}
+		
+		function downloadWord() {
+			const text = outputText.value;
+			const fileName = inputFile.files[0].name.replace('.srt', '') + '.doc';
+			const link = document.createElement('a');
+			document.body.appendChild(link);
+			link.download = fileName;
+			const blob = new Blob(["\ufeff", text], {type: 'application/msword;charset=utf-8'});
+			link.href = URL.createObjectURL(blob);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(link.href);
 		}
 	</script>
 </body>
