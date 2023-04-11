@@ -32,14 +32,8 @@
 			box-sizing: border-box;
 		}
 	
-		h2 {
-			margin-top: 0;
-			margin-bottom: 5px;
-			font-size: 18px;
-			font-weight: bold;
-		}
 		 button {
-            margin-top: 10px;
+            margin-top: 5px;
             font-size: 17px;
             padding: 5px 10px;
             background-color: #4CAF50;
@@ -53,28 +47,28 @@
 <body>
 	<h1>Convert SRT to Text</h1>
 	<form>
-	  <div>
-		<label for="input-file">Choose SRT File:</label>
-		<input type="file" id="input-file" accept=".srt" required>
-	  </div>
-	  <div>
-		<button type="button" onclick="preview()">Convert</button>
-	  </div>
-	  <div class="container">
+		<div>
+			<label for="input-file">Choose SRT File:</label>
+			<input type="file" id="input-file" accept=".srt" required>
+		</div>
+		<div>
+			<button type="button" onclick="preview()">Convert</button>
+		</div>
+		<div class="container">
 		<div class="left-container">
-		  <div class="title">字幕原文</div>
-		  <textarea id="input-text" class="left" readonly></textarea>
+			  <div class="title">Original Subtitles</div>
+			  <textarea id="input-text" class="left" readonly></textarea>
 		</div>
 		<div class="right-container">
-		  <div class="title">纯文字</div>
-		  <textarea id="output-text" class="right" readonly></textarea>
+			  <div class="title">Plain Text</div>
+			  <textarea id="output-text" class="right" readonly></textarea>
 		</div>
-	  </div>
-	  <div style="text-align: right;">
-		<button type="button" onclick="copyToClipboard()">Copy</button>
-		<button type="button" onclick="download()">Download Txt</button>
-		<button type="button" onclick="downloadWord()">Download Word</button>
-	  </div>
+		</div>
+		<div style="text-align: right;">
+			<button type="button" onclick="copyToClipboard()">Copy</button>
+			<button type="button" onclick="download()">Download Txt</button>
+			<button type="button" onclick="downloadWord()">Download Word</button>
+		</div>
 	</form>
 	<script>
 		const inputFile = document.getElementById('input-file');
