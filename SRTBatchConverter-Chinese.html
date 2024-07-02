@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一键批量字幕转文本</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #e9ecef;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .preview-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .preview {
+            width: 48%;
+        }
+        .preview h2 {
+            text-align: center;
+            font-size: 1.2em;
+            color: #444;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            position: relative;
+        }
+        .buttons .dropdown {
+            position: relative;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .buttons button:hover {
+            background-color: #0056b3;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        .dropdown-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #333;
+            background-color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .dropdown-menu button:hover {
+            background-color: #f8f9fa;
+        }
+        input[type="file"] {
+            display: block;
+            margin: 0 auto 20px;
+            font-size: 1em;
+            padding: 5px;
+        }
+        .alert {
+            display: none;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            opacity: 1;
+            transition: opacity 2s ease-out;
+        }
+        .alert.error {
+            background-color: #dc3545;
+        }
+        .file-list {
+            margin-top: 20px;
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            font-size: 0.9em;
+        }
+        .file-list input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .file-list div {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .file-list div:hover {
+            background-color: #e9ecef;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>一键批量字幕转文本</h1>
+        <input type="file" id="srtFiles" accept=".srt" multiple>
+        <div class="alert" id="alertBox">成功复制到剪贴板</div>
+        <div class="alert error" id="errorBox">您还没有选择任何文件</div>
+        <div class="file-list" id="fileList"></div>
+        <div class="buttons">
+            <button id="selectAllButton">全选 / 全不选</button>
+            <div class="dropdown" id="downloadSelectedDropdown">
+                <button id="downloadSelectedButton">下载选中的文件</button>
+                <div class="dropdown-menu" id="downloadSelectedMenu">
+                    <button id="downloadSelectedTxt">下载 TXT 格式</button>
+                    <button id="downloadSelectedWord">下载 Word 格式</button>
+                </div>
+            </div>
+            <button id="copyButton">复制预览框内容到剪贴板</button>
+        </div>
+        <div class="preview-container">
+            <div class="preview">
+                <h2>SRT 原文预览:</h2>
+                <pre id="sourcePreview"></pre>
+            </div>
+            <div class="preview">
+                <h2>转换后结果:</h2>
+                <pre id="convertedPreview"></pre>
+            </div>
+        </div>
+        <div class="footer">
+            由 @StriveMoring 编写 代码已开源至 <a href="https://github.com/StriveMoring/ConvertSrtToText-HTML">Github</a>.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <script>
+        let files = [];
+        let convertedFiles = {};
+        let fileNames = [];
+
+        document.getElementById('srtFiles').addEventListener('change', handleFilesSelect, false);
+        document.getElementById('selectAllButton').addEventListener('click', toggleSelectAll, false);
+
+        function handleFilesSelect(event) {
+            files = Array.from(event.target.files);
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            files.forEach((file, index) => {
+                const listItem = document.createElement('div');
+                listItem.innerHTML = `<input type="checkbox" class="file-checkbox" value="${file.name}">${file.name}`;
+                listItem.addEventListener('click', () => previewFile(file));
+                fileList.appendChild(listItem);
+
+                // 默认选择第一个文件
+                if (index === 0) {
+                    listItem.querySelector('.file-checkbox').checked = true;
+                    previewFile(file);
+                }
+            });
+        }
+
+        function previewFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                document.getElementById('sourcePreview').textContent = content;
+                const convertedContent = convertSRT(content);
+                convertedFiles[file.name] = {
+                    txt: new Blob([convertedContent], { type: 'text/plain' }),
+                    doc: new Blob([convertedContent], { type: 'application/msword' })
+                };
+                fileNames.push(file.name);
+                document.getElementById('convertedPreview').textContent = convertedContent;
+            };
+            reader.readAsText(file);
+        }
+
+        function convertSRT(content) {
+            return content
+                .replace(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g, '')
+                .replace(/^\d+\s*$/gm, '')
+                .replace(/^\s*[\r\n]/gm, '')
+                .replace(/\n{2,}/g, '\n')
+                .trim()
+                .replace(/[\r\n]+/g, '\n');
+        }
+
+        function downloadFiles(files, fileNames, format) {
+            if (files.length === 1) {
+                const file = files[0][format];
+                const a = document.createElement('a');
+                const url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = fileNames[0];
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                const zip = new JSZip();
+                files.forEach((file, index) => {
+                    zip.file(fileNames[index], file[format]);
+                });
+                zip.generateAsync({ type: 'blob' }).then(function(content) {
+                    const a = document.createElement('a');
+                    const url = URL.createObjectURL(content);
+                    a.href = url;
+                    a.download = `converted_files_${format}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+            }
+        }
+
+        document.getElementById('downloadSelectedTxt').addEventListener('click', function() {
+            const selectedFiles = getSelectedFiles('txt');
+            if (selectedFiles.length === 0) {
+                showError('No files selected!');
+                return;
+            }
+            downloadFiles(selectedFiles, selectedFiles.map(f => f.name), 'txt');
+        });
+
+        document.getElementById('downloadSelectedWord').addEventListener('click', function() {
+            const selectedFiles = getSelectedFiles('doc');
+            if (selectedFiles.length === 0) {
+                showError('No files selected!');
+                return;
+            }
+            downloadFiles(selectedFiles, selectedFiles.map(f => f.name), 'doc');
+        });
+
+        function getSelectedFiles(format) {
+            return files.filter(file => {
+                return document.querySelector(`.file-checkbox[value="${file.name}"]`).checked;
+            }).map(file => ({
+                name: `converted_${file.name}.${format === 'txt' ? 'txt' : 'doc'}`,
+                [format]: convertedFiles[file.name][format]
+            }));
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+            errorBox.style.opacity = '1';
+            clearTimeout(errorBox.timeout);
+            errorBox.timeout = setTimeout(() => {
+                errorBox.style.opacity = '0';
+                setTimeout(() => {
+                    errorBox.style.display = 'none';
+                }, 2000);
+            }, 2000);
+        }
+
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            const button = dropdown.querySelector('button');
+            const menu = dropdown.querySelector('.dropdown-menu');
+
+            button.addEventListener('mouseover', () => {
+                menu.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mouseleave', () => {
+                menu.style.display = 'none';
+            });
+        });
+
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const text = document.getElementById('convertedPreview').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const alertBox = document.getElementById('alertBox');
+                alertBox.style.display = 'block';
+                alertBox.style.opacity = '1';
+                setTimeout(() => {
+                    alertBox.style.opacity = '0';
+                    setTimeout(() => {
+                        alertBox.style.display = 'none';
+                    }, 2000);
+                }, 2000);
+            });
+        });
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+            });
+            updateSelectedFiles();
+        }
+
+        function updateSelectedFiles() {
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            const selectedFiles = Array.from(checkboxes).filter(checkbox => checkbox.checked);
+            fileNames = selectedFiles.map(checkbox => checkbox.value);
+        }
+    </script>
+</body>
+</html>
