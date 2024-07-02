@@ -4,6 +4,8 @@
 PS:批量转换的版本有个小 bug，第一次全选下载功能不会生效，需要手动点击任意文件，再下载才会生效。
 暂时不知道怎么修。
 
+
+
 Convert srt file to plain text
 
 PS: There is a small bug in the batch conversion version. 
