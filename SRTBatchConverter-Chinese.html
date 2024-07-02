@@ -12,6 +12,7 @@
             background-color: #e9ecef;
         }
         .container {
+            position: relative;
             max-width: 1000px;
             margin: 0 auto;
             background: #fff;
@@ -155,10 +156,25 @@
         .footer a:hover {
             text-decoration: underline;
         }
+        .top-right-link {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff; /* Green background */
+            color: white; /* White text */
+            padding: 10px 20px; /* Padding */
+            text-decoration: none; /* Remove underline */
+            border-radius: 5px; /* Rounded corners */
+        }
+
+        .top-right-link:hover {
+            background-color: #0056b3; /* Darker green on hover */
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="index.html" class="top-right-link">返回单次转换</a>
         <h1>一键批量字幕转文本</h1>
         <input type="file" id="srtFiles" accept=".srt" multiple>
         <div class="alert" id="alertBox">成功复制到剪贴板</div>
